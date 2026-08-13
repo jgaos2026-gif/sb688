@@ -7,6 +7,25 @@
 
 SB688 is the public architecture page for the JGA Sovereign Stitch system: a modular AI and business-memory framework built around verified state, Clip Bricks, Memory Chips, STITCH handshakes, AVA business sessions, and VERA checks.
 
+## Data integrity dashboard
+
+The web app now includes an **SB688 Data Integrity Command Dashboard** on the home route (`/`) with:
+
+- Overall integrity score/status
+- Pass/fail integrity check indicators
+- Recent integrity events and violations
+- Structured records/log view grouped by operational area
+- A clear chain-of-command component layout for disciplined autonomous operations
+
+Data is delivered through `GET /api/data-integrity` and rendered in the dashboard with loading/error handling.
+
+Run locally with:
+
+```bash
+pnpm install
+pnpm dev
+```
+
 ---
 
 ## Core law
