@@ -15,92 +15,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import type { IntegrityDashboardData } from "@shared/dataIntegrity";
 import { AlertTriangle, CheckCircle2, ShieldCheck, XCircle } from "lucide-react";
-
-const integrityChecks = [
-  {
-    id: "VERA-101",
-    name: "Clip Brick Policy Signature",
-    owner: "VERA Gate",
-    status: "pass",
-    checkedAt: "2026-08-13 03:50 UTC",
-  },
-  {
-    id: "VERA-203",
-    name: "Ledger Hash Continuity",
-    owner: "Ledger Service",
-    status: "pass",
-    checkedAt: "2026-08-13 03:48 UTC",
-  },
-  {
-    id: "STITCH-309",
-    name: "STITCH Session Handshake",
-    owner: "STITCH Link",
-    status: "fail",
-    checkedAt: "2026-08-13 03:46 UTC",
-  },
-  {
-    id: "AVA-412",
-    name: "Access Pass TTL Validation",
-    owner: "AVA Operator",
-    status: "pass",
-    checkedAt: "2026-08-13 03:44 UTC",
-  },
-] as const;
-
-const integrityEvents = [
-  {
-    id: "EVT-9402",
-    severity: "warning",
-    title: "Handshake retried after nonce mismatch",
-    detail: "STITCH reissued a nonce and revalidated access pass metadata.",
-    time: "2026-08-13 03:46 UTC",
-  },
-  {
-    id: "EVT-9401",
-    severity: "info",
-    title: "Verification cycle checkpointed",
-    detail: "VERA stored signed checkpoint for SB689 chain segment B.",
-    time: "2026-08-13 03:41 UTC",
-  },
-  {
-    id: "EVT-9398",
-    severity: "critical",
-    title: "Out-of-sequence ledger append blocked",
-    detail: "Ledger write rejected before trusted state promotion.",
-    time: "2026-08-13 03:30 UTC",
-  },
-] as const;
-
-const records = [
-  {
-    area: "Operations",
-    source: "AVA Session Node",
-    file: "records/operations/ava-session.log",
-    status: "current",
-  },
-  {
-    area: "Memory",
-    source: "Customer Memory Chip",
-    file: "records/memory/customer-chip-index.json",
-    status: "current",
-  },
-  {
-    area: "Verification",
-    source: "VERA Gate",
-    file: "records/verification/vera-checkpoint-ledger.csv",
-    status: "requires-review",
-  },
-] as const;
-
-const chainOfCommand = [
-  "JGA Enterprise",
-  "SB688 Sovereign Stitch Spine",
-  "STITCH Knowledge Link",
-  "AVA Business Operator",
-  "VERA Verification Gate",
-  "Ledger + Checkpoint",
-] as const;
+import { useEffect, useState } from "react";
 
 function statusVariant(status: "pass" | "fail") {
   return status === "pass" ? "default" : "destructive";
@@ -115,9 +32,55 @@ function eventVariant(severity: "info" | "warning" | "critical") {
 }
 
 export default function Home() {
-  const passedChecks = integrityChecks.filter((check) => check.status === "pass").length;
-  const totalChecks = integrityChecks.length;
-  const integrityScore = Math.round((passedChecks / totalChecks) * 100);
+  const [dashboardData, setDashboardData] = useState<IntegrityDashboardData | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchIntegrityData = async () => {
+      try {
+        const response = await fetch("/api/data-integrity");
+
+        if (!response.ok) {
+          throw new Error(`Integrity API returned ${response.status}`);
+        }
+
+        const payload = (await response.json()) as IntegrityDashboardData;
+        setDashboardData(payload);
+      } catch {
+        setLoadError("Unable to load integrity status records.");
+      }
+    };
+
+    void fetchIntegrityData();
+  }, []);
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-muted/30 py-10">
+        <main className="container">
+          <section className="rounded-xl border border-destructive/40 bg-card p-6 shadow-sm">
+            <p className="text-sm text-destructive">{loadError}</p>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  if (!dashboardData) {
+    return (
+      <div className="min-h-screen bg-muted/30 py-10">
+        <main className="container">
+          <section className="rounded-xl border bg-card p-6 shadow-sm">
+            <p className="text-sm text-muted-foreground">Loading integrity records...</p>
+          </section>
+        </main>
+      </div>
+    );
+  }
+
+  const passedChecks = dashboardData.integrityChecks.filter((check) => check.status === "pass").length;
+  const totalChecks = dashboardData.integrityChecks.length;
+  const integrityScore = totalChecks === 0 ? 0 : Math.round((passedChecks / totalChecks) * 100);
   const healthLabel = integrityScore >= 90 ? "stable" : integrityScore >= 75 ? "watch" : "risk";
 
   return (
@@ -131,6 +94,7 @@ export default function Home() {
           <p className="mt-2 text-sm text-muted-foreground">
             Rule-driven integrity monitoring for autonomous business-in-a-box operations.
           </p>
+          <p className="mt-1 text-xs text-muted-foreground">Snapshot generated: {dashboardData.generatedAt}</p>
         </section>
 
         <section className="grid gap-4 md:grid-cols-3">
@@ -143,9 +107,13 @@ export default function Home() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-4xl font-semibold">{integrityScore}%</p>
-                  <p className="text-xs text-muted-foreground">{passedChecks} of {totalChecks} checks passing</p>
+                  <p className="text-xs text-muted-foreground">
+                    {passedChecks} of {totalChecks} checks passing
+                  </p>
                 </div>
-                <Badge variant={healthLabel === "risk" ? "destructive" : healthLabel === "watch" ? "secondary" : "default"}>
+                <Badge
+                  variant={healthLabel === "risk" ? "destructive" : healthLabel === "watch" ? "secondary" : "default"}
+                >
                   {healthLabel.toUpperCase()}
                 </Badge>
               </div>
@@ -160,8 +128,8 @@ export default function Home() {
             </CardHeader>
             <CardContent>
               <ol className="space-y-2 text-sm">
-                {chainOfCommand.map((node, index) => (
-                  <li key={node} className="rounded-md border bg-muted/30 p-2">
+                {dashboardData.chainOfCommand.map((node, index) => (
+                  <li key={`${index}-${node}`} className="rounded-md border bg-muted/30 p-2">
                     <span className="mr-2 font-semibold text-muted-foreground">{index + 1}.</span>
                     {node}
                   </li>
@@ -178,11 +146,13 @@ export default function Home() {
               <CardDescription>Pass/fail indicators across validation gates</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {integrityChecks.map((check) => (
+              {dashboardData.integrityChecks.map((check) => (
                 <div key={check.id} className="flex items-start justify-between rounded-lg border p-3">
                   <div>
                     <p className="font-medium">{check.name}</p>
-                    <p className="text-xs text-muted-foreground">{check.id} · {check.owner}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {check.id} · {check.owner}
+                    </p>
                     <p className="text-xs text-muted-foreground">Checked {check.checkedAt}</p>
                   </div>
                   <Badge variant={statusVariant(check.status)} className="gap-1">
@@ -200,7 +170,7 @@ export default function Home() {
               <CardDescription>Violations and verification logs</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {integrityEvents.map((event) => (
+              {dashboardData.integrityEvents.map((event) => (
                 <div key={event.id} className="rounded-lg border p-3">
                   <div className="mb-2 flex items-center justify-between gap-2">
                     <p className="font-medium">{event.title}</p>
@@ -216,7 +186,9 @@ export default function Home() {
                     </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{event.detail}</p>
-                  <p className="mt-2 text-xs text-muted-foreground">{event.id} · {event.time}</p>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {event.id} · {event.time}
+                  </p>
                 </div>
               ))}
             </CardContent>
@@ -227,7 +199,7 @@ export default function Home() {
           <Card>
             <CardHeader>
               <CardTitle>Structured records</CardTitle>
-              <CardDescription>Organized files by business memory lane</CardDescription>
+              <CardDescription>Organized files by operational area</CardDescription>
             </CardHeader>
             <CardContent>
               <Table>
@@ -240,14 +212,14 @@ export default function Home() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {records.map((record) => (
+                  {dashboardData.records.map((record) => (
                     <TableRow key={record.file}>
                       <TableCell className="font-medium">{record.area}</TableCell>
                       <TableCell>{record.source}</TableCell>
                       <TableCell className="font-mono text-xs">{record.file}</TableCell>
                       <TableCell>
                         <Badge variant={record.status === "current" ? "default" : "secondary"} className="uppercase">
-                          {record.status.replace("-", " ")}
+                          {record.status.replace(/-/g, " ").toUpperCase()}
                         </Badge>
                       </TableCell>
                     </TableRow>

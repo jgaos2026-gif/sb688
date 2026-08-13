@@ -17,6 +17,8 @@ The web app now includes an **SB688 Data Integrity Command Dashboard** on the ho
 - Structured records/log view grouped by operational area
 - A clear chain-of-command component layout for disciplined autonomous operations
 
+Data is delivered through `GET /api/data-integrity` and rendered in the dashboard with loading/error handling.
+
 Run locally with:
 
 ```bash

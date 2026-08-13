@@ -2,6 +2,7 @@ import express from "express";
 import { createServer } from "http";
 import path from "path";
 import { fileURLToPath } from "url";
+import { integrityDashboardData } from "../shared/dataIntegrity";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -15,6 +16,13 @@ async function startServer() {
     process.env.NODE_ENV === "production"
       ? path.resolve(__dirname, "public")
       : path.resolve(__dirname, "..", "dist", "public");
+
+  app.get("/api/data-integrity", (_req, res) => {
+    res.json({
+      ...integrityDashboardData,
+      generatedAt: new Date().toISOString(),
+    });
+  });
 
   app.use(express.static(staticPath));
 
