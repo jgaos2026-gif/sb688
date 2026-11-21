@@ -45,7 +45,7 @@ JGA ENTERPRISE / JAY'S GRAPHIC ARTS
   ↓
 SB688 SOVEREIGN STITCH SPINE
   ↓
-SB689 HIVE MIND EXPANSION
+SB689 ADMISSION AND VERIFICATION GATE
   ↓
 STITCH KNOWLEDGE LINK + HANDSHAKE
   ↓
@@ -88,11 +88,11 @@ Shared architecture does not mean shared private memory.
 | JGA Enterprise | Root operator of the architecture. |
 | Jay's Graphic Arts | Brand, design, client-facing, and business layer. |
 | SB688 | Sovereign Stitch law and protected spine. |
-| SB689 | Hive Mind expansion for many isolated businesses. |
-| Braided Topology | Separate paths for operations, memory, and verification. |
+| SB689 | Admission and Verification Gate for scoped, authorized operations. |
+| SB712 | Triad X3 independent witness quorum; not a memory or Möbius-loop label. |\n| Braided Topology | Separate paths for operations, memory, and verification. |
 | STITCH | Knowledge link, router, and handshake layer. |
 | Micro Mini Card | Business access object. |
-| Memory Chip | Customer private business-memory container. |
+| Memory Chip | Customer private business-memory container. |\n| Memory Braid | Unnumbered HOT/WARM/COLD storage and workload-placement subsystem. |
 | AVA | Business operator layer after verified access. |
 | Clip Bricks | Modular rented or owned business tools. |
 | VERA | Verification gate. |
